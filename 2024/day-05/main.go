@@ -12,27 +12,25 @@ import (
 var input string
 
 func main() {
-	//fmt.Println(part1())
-	fmt.Println(part2())
-}
-
-// find correct updates
-func part1() int {
 	rules, updates := parseInput()
 
 	rulesMap := buildRulesMap(rules)
-	count := 0
-	sum := 0
+
+	var (
+		correct, incorrect int
+	)
 
 	for _, update := range updates {
 		u := strings.Split(update, ",")
 		result := processUpdate(rulesMap, u)
 		if result {
-			sum += conv.ToInt(u[len(u)/2])
-			count++
+			correct += conv.ToInt(u[len(u)/2])
+		} else {
+			correctOrdering(rulesMap, u)
+			incorrect += conv.ToInt(u[len(u)/2])
 		}
 	}
-	return sum
+	fmt.Println(correct, incorrect)
 }
 
 func processUpdate(rulesMap map[string][]string, update []string) bool {
@@ -43,7 +41,6 @@ func processUpdate(rulesMap map[string][]string, update []string) bool {
 			ok := slices.Contains(val, v)
 
 			if !ok {
-				fmt.Println(update[i], v, ok)
 				return false
 			}
 		}
@@ -62,45 +59,18 @@ func buildRulesMap(rules []string) map[string][]string {
 	return rulesMap
 }
 
-func part2() int {
-	rules, updates := parseInput()
-
-	rulesMap := buildRulesMap(rules)
-	count := 0
-	sum := 0
-
-	for _, update := range updates {
-		u := strings.Split(update, ",")
-		result := processUpdate2(rulesMap, u)
-		if !result {
-			sum += conv.ToInt(u[len(u)/2])
-			count++
-		}
-		fmt.Println("===")
-	}
-	return sum
-}
-
-func processUpdate2(rulesMap map[string][]string, update []string) bool {
+func correctOrdering(rulesMap map[string][]string, update []string) {
 	for i := 0; i < len(update)-1; i++ {
 		for j := i + 1; j < len(update); j++ {
-
-		}
-		val := rulesMap[update[i]]
-		nextInOrder := update[i+1:]
-		for _, v := range nextInOrder {
-			ok := slices.Contains(val, v)
+			val := rulesMap[update[i]]
+			ok := slices.Contains(val, update[j])
 
 			if !ok {
-				fmt.Println(update[i], v, ok)
-				return false
+				// swap
+				update[i], update[j] = update[j], update[i]
 			}
 		}
 	}
-	return true
-	// 97,13,75,29,47
-	// 97,75,13,29,47
-	// 97,75,29,47,13
 }
 
 func parseInput() ([]string, []string) {
