@@ -2,11 +2,7 @@ package main
 
 import (
 	_ "embed"
-	"encoding/json"
 	"fmt"
-	"github.com/bndr/gotabulate"
-	"os"
-	"os/exec"
 	"slices"
 	"strings"
 )
@@ -15,62 +11,148 @@ import (
 var input string
 
 func main() {
-	part1()
+	part2()
 }
 
 func part1() {
 	matrix := parseInput()
-	traverse(matrix)
+	move(matrix, false)
 }
 
-func isBlocked(matrix [][]string, position [2]int) bool {
-	x, y := position[0], position[1]
+func part2() {
+	matrix := parseInput()
+	visited := move(matrix, false)
+	fmt.Println(visited, len(visited))
+	cycles := 0
+
+	for _, v := range visited[2:] {
+		x, y := v[0], v[1]
+		matrix = reset(&matrix)
+		matrix[x][y] = "O"
+		if move2(matrix, true) {
+			cycles++
+		}
+	}
+	fmt.Println(cycles)
+}
+
+func reset(matrix *[][]string) [][]string {
+	*matrix = parseInput()
+	return *matrix
+}
+
+func isBlocked(matrix [][]string, x, y int, part2 bool) bool {
+	if part2 {
+		return matrix[x][y] == "#" || matrix[x][y] == "O"
+	}
 	return matrix[x][y] == "#"
 }
 
-var DIRECTIONS = map[string][2]int{"UP": {-1, 0}, "DOWN": {1, 0}, "RIGHT": {0, 1}, "LEFT": {0, -1}}
+func move2(matrix [][]string, part2 bool) bool {
+	startX, startY := findStartPosition(matrix)
+	blockedX, blockedY := findBlockedPosition(matrix)
 
-func move(matrix [][]string, direction string, pos [2]int, visited [][2]int) {
-	dx := pos[0] + DIRECTIONS[direction][0]
-	dy := pos[1] + DIRECTIONS[direction][1]
-	nextPos := [2]int{dx, dy}
+	direction := "UP"
+	matrix[startX][startY] = "X"
+	visited := [][2]int{{startX, startY}}
 
-	if dx >= len(matrix) || dy >= len(matrix[0]) {
-		fmt.Println(visited)
-		fmt.Println(len(visited))
-		//pprint(matrix)
-		return
-	}
+	i, j := startX, startY
+	prev := [2]int{i, j}
+	//var blocked [][2]int
+	blockedCount := 0
 
-	//	fmt.Println("LAST", dx, dy, pos)
-	//	fmt.Println(len(visited))
-	//	pprint(matrix)
-	//	return
-	//}
-
-	if isBlocked(matrix, nextPos) {
-		switch direction {
-		case "UP":
-			move(matrix, "RIGHT", pos, visited)
-		case "DOWN":
-			move(matrix, "LEFT", pos, visited)
-		case "RIGHT":
-			move(matrix, "DOWN", pos, visited)
-		case "LEFT":
-			move(matrix, "UP", pos, visited)
+	for {
+		fmt.Println(blockedCount)
+		if blockedCount >= 15 {
+			return true
 		}
+		if i < 0 || i >= len(matrix) || j < 0 || j >= len(matrix[0]) {
+			return false
+		}
+		if isBlocked(matrix, i, j, part2) {
+			switch direction {
+			case "UP":
+				direction = "RIGHT"
+			case "RIGHT":
+				direction = "DOWN"
+			case "DOWN":
+				direction = "LEFT"
+			case "LEFT":
+				direction = "UP"
+			}
+			if blockedX == i && blockedY == j {
+				blockedCount++
+			}
+			i = prev[0]
+			j = prev[1]
+		} else {
+			pos := [2]int{i, j}
+			if !slices.Contains(visited, pos) {
+				visited = append(visited, pos)
+				matrix[i][j] = "X"
+			}
+		}
+
+		prev = [2]int{i, j}
+		i += DIRECTIONS[direction][0]
+		j += DIRECTIONS[direction][1]
 	}
-	if !slices.Contains(visited, nextPos) {
-		visited = append(visited, nextPos)
-		matrix[nextPos[0]][nextPos[1]] = "X"
-	}
-	move(matrix, direction, nextPos, visited)
 }
 
-func traverse(matrix [][]string) {
+func move(matrix [][]string, part2 bool) [][2]int {
 	startX, startY := findStartPosition(matrix)
+	blockedX, blockedY := findBlockedPosition(matrix)
 
-	move(matrix, "UP", [2]int{startX, startY}, [][2]int{})
+	direction := "UP"
+	matrix[startX][startY] = "X"
+	visited := [][2]int{{startX, startY}}
+
+	i, j := startX, startY
+	prev := [2]int{i, j}
+	//var blocked [][2]int
+	blockedCount := 0
+
+	for {
+		if blockedCount > 10 {
+		}
+		if i < 0 || i >= len(matrix) || j < 0 || j >= len(matrix[0]) {
+			return visited
+		}
+		if isBlocked(matrix, i, j, part2) {
+			switch direction {
+			case "UP":
+				direction = "RIGHT"
+			case "RIGHT":
+				direction = "DOWN"
+			case "DOWN":
+				direction = "LEFT"
+			case "LEFT":
+				direction = "UP"
+			}
+			if blockedX == i && blockedY == j {
+				blockedCount++
+			}
+			//
+			//b := [2]int{blockedX, blockedY}
+			//if slices.Contains(blocked, b) {
+			//	fmt.Println("CYCLE", i, j)
+			//	return [][2]int{{1, 2}}
+			//}
+			i = prev[0]
+			j = prev[1]
+		} else {
+			pos := [2]int{i, j}
+			if !slices.Contains(visited, pos) {
+				visited = append(visited, pos)
+				matrix[i][j] = "X"
+			}
+		}
+		//pprint(matrix)
+
+		prev = [2]int{i, j}
+		i += DIRECTIONS[direction][0]
+		j += DIRECTIONS[direction][1]
+	}
 }
 
 func findStartPosition(matrix [][]string) (int, int) {
@@ -85,7 +167,19 @@ func findStartPosition(matrix [][]string) (int, int) {
 	return -1, -1
 }
 
-func part2() {}
+func findBlockedPosition(matrix [][]string) (int, int) {
+	for i := 0; i < len(matrix); i++ {
+		for j := 0; j < len(matrix[0]); j++ {
+			if matrix[i][j] == "O" {
+				return i, j
+			}
+		}
+	}
+
+	return -1, -1
+}
+
+var DIRECTIONS = map[string][2]int{"UP": {-1, 0}, "DOWN": {1, 0}, "RIGHT": {0, 1}, "LEFT": {0, -1}}
 
 func parseInput() [][]string {
 	var matrix [][]string
@@ -99,35 +193,7 @@ func parseInput() [][]string {
 }
 
 func pprint(matrix [][]string) {
-	var m []string
 	for _, thing := range matrix {
 		fmt.Println(strings.Join(thing, ""))
 	}
-	table := gotabulate.Create(m)
-	fmt.Println(table.Render("simple"))
-}
-
-//func uniq[T int, Slice ~[2]T](slice Slice) Slice {
-//	slices.Sort(slice)
-//	return slices.Compact(slice)
-//}
-
-func clear() {
-	cmd := exec.Command("clear") //Linux example, its tested
-	cmd.Stdout = os.Stdout
-	err := cmd.Run()
-	if err != nil {
-		return
-	}
-}
-
-func flatPrint(matrix [][]string) {
-	var m []string
-
-	for _, thing := range matrix {
-		//m = append(m, strings.Join(thing, ""))
-		s, _ := json.MarshalIndent(thing, "", " ")
-		m = append(m, string(s))
-	}
-	fmt.Println(m)
 }
