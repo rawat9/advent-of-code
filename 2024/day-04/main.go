@@ -94,28 +94,6 @@ func toMatrix(wordSearch []string) [][]string {
 	return matrix
 }
 
-//func transpose(matrix [][]string) []string {
-//	m := len(matrix)
-//	n := len(matrix[0])
-//
-//	newMatrix := make([][]string, n)
-//
-//	for i := 0; i < m; i++ {
-//		newMatrix[i] = make([]string, m)
-//		for j := 0; j < n; j++ {
-//			newMatrix[i][j] = matrix[j][i]
-//		}
-//	}
-//
-//	var res []string
-//
-//	for _, v := range newMatrix {
-//		res = append(res, strings.Join(v, ""))
-//	}
-//
-//	return res
-//}
-
 func diagsCount(matrix [][]string) int {
 	diags := 0
 
