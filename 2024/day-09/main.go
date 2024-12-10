@@ -12,7 +12,7 @@ import (
 var input string
 
 func main() {
-	fmt.Println(part1())
+	//fmt.Println(part1())
 	fmt.Println(part2())
 }
 
@@ -73,5 +73,42 @@ func buildBlocks() []int {
 }
 
 func part2() int {
+	blocks := buildBlocks()
+	fmt.Println("Total length", len(blocks), blocks[12:14])
+
+	i, j := 0, 1
+	m, n := len(blocks)-1, len(blocks)-1
+
+	fmt.Println(blocks)
+
+	for {
+		if blocks[i] == -1 {
+			j = i + 1
+			for blocks[j] == -1 {
+				j++
+			}
+			//fmt.Println(i, j)
+			i = j
+			j = i + 1
+		}
+		i++
+
+		if blocks[m] == -1 || blocks[n] == -1 {
+			//fmt.Println(m, n, blocks[m], blocks[n])
+			m--
+			n--
+		}
+		if blocks[m] == blocks[n] {
+			for blocks[m] == blocks[n] {
+				n--
+			}
+			fmt.Println(m, n)
+			//m = n
+			//n = m - 1
+		}
+		m--
+
+	}
+
 	return 0
 }
